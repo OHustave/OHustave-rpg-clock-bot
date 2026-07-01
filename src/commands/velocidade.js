@@ -5,8 +5,6 @@ const { getGuild, saveGuild } = require('../store');
 const { currentFictionalMinutes, reanchor, describeRate } = require('../timeEngine');
 const { clockEmbed } = require('../embeds');
 
-const UNIT_MINUTES = { minutos: 1, horas: 60, dias: 1440 };
-
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('velocidade')
@@ -30,11 +28,15 @@ module.exports = {
     const state = getGuild(interaction.guildId);
     const preset = interaction.options.getString('preset');
 
+    // Deriva a conversao do calendario atual (dias/horas podem ser customizados).
+    const perHour = state.calendar.minutesPerHour;
+    const perDay = state.calendar.hoursPerDay * state.calendar.minutesPerHour;
+
     let rate;
     if (preset === 'pausado') rate = 0;
     else if (preset === 'real') rate = 1;
-    else if (preset === 'hora') rate = 60;
-    else if (preset === 'dia') rate = 1440;
+    else if (preset === 'hora') rate = perHour;
+    else if (preset === 'dia') rate = perDay;
     else {
       const qty = interaction.options.getInteger('quantidade');
       const unit = interaction.options.getString('unidade');
@@ -45,7 +47,8 @@ module.exports = {
         });
         return;
       }
-      rate = qty * UNIT_MINUTES[unit];
+      const factor = unit === 'dias' ? perDay : unit === 'horas' ? perHour : 1;
+      rate = qty * factor;
     }
 
     // Congela o tempo atual antes de trocar o ritmo, para nao dar salto.
@@ -55,7 +58,7 @@ module.exports = {
     saveGuild(interaction.guildId, state);
 
     await interaction.reply({
-      content: `Ritmo definido: ${describeRate(rate)}.`,
+      content: `Ritmo definido: ${describeRate(rate, state.calendar)}.`,
       embeds: [clockEmbed(state)],
     });
   },

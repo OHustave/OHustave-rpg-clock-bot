@@ -1,6 +1,11 @@
 'use strict';
 
-const { minutesToComponents, formatComponents } = require('./calendar');
+const {
+  minutesToComponents,
+  formatComponents,
+  normalizeCalendar,
+  DEFAULT_CALENDAR,
+} = require('./calendar');
 
 // Retorna o total de minutos ficticios "agora", considerando o ritmo (rate).
 function currentFictionalMinutes(state, nowMs = Date.now()) {
@@ -24,17 +29,19 @@ function formatNow(state, nowMs = Date.now()) {
   return formatComponents(state.calendar, currentComponents(state, nowMs));
 }
 
-// Descreve o ritmo atual em linguagem natural.
-function describeRate(rate) {
+// Descreve o ritmo atual em linguagem natural, respeitando o calendario.
+function describeRate(rate, cal = DEFAULT_CALENDAR) {
   if (!rate || rate === 0) return 'Pausado (o tempo nao avanca sozinho)';
-  const perRealMinute = rate;
-  if (perRealMinute % 1440 === 0) {
-    return `${perRealMinute / 1440} dia(s) ficticio(s) por minuto real`;
+  const c = normalizeCalendar(cal);
+  const perDay = c.hoursPerDay * c.minutesPerHour;
+  const perHour = c.minutesPerHour;
+  if (rate % perDay === 0) {
+    return `${rate / perDay} dia(s) ficticio(s) por minuto real`;
   }
-  if (perRealMinute % 60 === 0) {
-    return `${perRealMinute / 60} hora(s) ficticia(s) por minuto real`;
+  if (rate % perHour === 0) {
+    return `${rate / perHour} hora(s) ficticia(s) por minuto real`;
   }
-  return `${perRealMinute} minuto(s) ficticio(s) por minuto real`;
+  return `${rate} minuto(s) ficticio(s) por minuto real`;
 }
 
 module.exports = {

@@ -13,7 +13,7 @@ function clockEmbed(state) {
     .setTitle('Relogio de RPG')
     .addFields(
       { name: 'Data e hora', value: `**${formatNow(state)}**` },
-      { name: 'Ritmo', value: describeRate(state.clock.rate) },
+      { name: 'Ritmo', value: describeRate(state.clock.rate, state.calendar) },
     );
 
   if (loc) {

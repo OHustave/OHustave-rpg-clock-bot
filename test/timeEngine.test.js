@@ -77,6 +77,18 @@ test('describeRate cobre presets', () => {
   assert.match(describeRate(1440), /dia/);
 });
 
+test('describeRate respeita calendario customizado (dia de 10h)', () => {
+  const cal = {
+    monthNames: ['Um', 'Dois', 'Tres'],
+    daysPerMonth: [5, 5, 5],
+    hoursPerDay: 10,
+    minutesPerHour: 60,
+  };
+  // Num dia de 10h, 600 min ficticios = 1 dia; 60 min = 1 hora.
+  assert.match(describeRate(600, cal), /1 dia/);
+  assert.match(describeRate(60, cal), /1 hora/);
+});
+
 test('formatComponents produz string legivel', () => {
   const s = formatComponents(DEFAULT_CALENDAR, {
     year: 1000, month: 1, monthName: 'Janeiro', day: 1, hour: 8, minute: 5,
