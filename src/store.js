@@ -46,6 +46,7 @@ function defaultGuildState() {
     },
     locations: [],
     currentLocation: null,
+    events: [],
   };
 }
 

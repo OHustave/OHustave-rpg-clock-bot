@@ -9,6 +9,12 @@ const DEFAULT_CALENDAR = {
   daysPerMonth: [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31],
   hoursPerDay: 24,
   minutesPerHour: 60,
+  // Nomes dos dias da semana (o dia absoluto 0 corresponde ao primeiro).
+  weekDayNames: ['Segunda', 'Terca', 'Quarta', 'Quinta', 'Sexta', 'Sabado', 'Domingo'],
+  // Duracao do ciclo lunar em dias ficticios.
+  moonCycleDays: 28,
+  // Estacoes distribuidas ao longo do ano (em ordem).
+  seasonNames: ['Primavera', 'Verao', 'Outono', 'Inverno'],
 };
 
 function normalizeCalendar(cal) {
@@ -72,12 +78,14 @@ function minutesToComponents(cal, totalMinutes) {
   let dayOfYear = totalDays - year * dpy;
   if (dayOfYear < 0) { dayOfYear += dpy; year -= 1; }
 
+  const dayIndexInYear = dayOfYear; // 0-based dentro do ano (antes de descontar meses)
+  let dayInMonth = dayOfYear;
   let month = 0;
-  while (month < c.daysPerMonth.length && dayOfYear >= c.daysPerMonth[month]) {
-    dayOfYear -= c.daysPerMonth[month];
+  while (month < c.daysPerMonth.length && dayInMonth >= c.daysPerMonth[month]) {
+    dayInMonth -= c.daysPerMonth[month];
     month += 1;
   }
-  const day = dayOfYear + 1;
+  const day = dayInMonth + 1;
 
   return {
     year,
@@ -86,6 +94,8 @@ function minutesToComponents(cal, totalMinutes) {
     day,
     hour,
     minute,
+    dayOfYear: dayIndexInYear, // 0-based dentro do ano
+    absoluteDay: totalDays, // dias desde o ano 0
   };
 }
 
@@ -101,6 +111,7 @@ module.exports = {
   normalizeCalendar,
   minutesPerDay,
   daysPerYear,
+  daysBeforeMonth,
   componentsToMinutes,
   minutesToComponents,
   formatComponents,
