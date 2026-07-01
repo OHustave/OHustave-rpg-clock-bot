@@ -2,7 +2,7 @@
 
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { getGuild, saveGuild } = require('../store');
-const { normalizeCalendar, componentsToMinutes } = require('../calendar');
+const { normalizeCalendar, componentsToMinutes, minutesToComponents } = require('../calendar');
 const { currentComponents, reanchor } = require('../timeEngine');
 const { EMOJI, COLORS } = require('../theme');
 
@@ -44,8 +44,12 @@ module.exports = {
       return;
     }
 
-    // Preserva o instante ficticio atual antes de mudar o calendario.
+    // Preserva o instante atual e as datas dos eventos antes de mudar o calendario.
     const before = currentComponents(state);
+    const eventsBefore = (state.events || []).map((e) => ({
+      event: e,
+      comp: minutesToComponents(state.calendar, e.atMinutes),
+    }));
 
     if (sub === 'meses') {
       const nomes = interaction.options.getString('nomes').split(',').map((s2) => s2.trim()).filter(Boolean);
@@ -99,6 +103,20 @@ module.exports = {
       minute: before.minute,
     });
     reanchor(state, fic);
+
+    // Remapeia os eventos para manter a mesma data/hora no novo calendario.
+    for (const { event, comp } of eventsBefore) {
+      const evMonth = Math.min(comp.month, state.calendar.monthNames.length);
+      event.atMinutes = componentsToMinutes(state.calendar, {
+        year: comp.year,
+        month: evMonth,
+        day: comp.day,
+        hour: comp.hour,
+        minute: comp.minute,
+      });
+    }
+    if (state.events) state.events.sort((a, b) => a.atMinutes - b.atMinutes);
+
     saveGuild(interaction.guildId, state);
 
     await interaction.reply('Calendario atualizado. Use `/calendario ver` para conferir e `/relogio` para ver a data.');
